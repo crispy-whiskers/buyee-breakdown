@@ -39,4 +39,10 @@ func (c *Calculator) Break_shipping_down() {
 		return
 	}
 
+	for _, e := range c.people {
+		e.proportion = e.ship_b4 / c.total_shipping
+		e.ship_total = e.proportion * c.batched
+		e.iou = e.item_total + e.ship_total
+	}
+
 }
