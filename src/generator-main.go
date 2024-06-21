@@ -1,7 +1,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"net/url"
+	"strconv"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -40,14 +43,145 @@ func initPersonRow() fyne.CanvasObject {
 	return row
 }
 
+func initItemRow() fyne.CanvasObject {
+	var row_height float32 = 15.0
+	var row_width float32 = 70.0
+
+	l, _ := url.Parse("https://buyee.jp")
+	link := widget.NewHyperlink("hi", l)
+	lbox := container.NewGridWrap(fyne.NewSize(200, row_height), link)
+
+	person := widget.NewLabel("p")
+	pbox := container.NewGridWrap(fyne.NewSize(150, row_height), person)
+
+	s_item := fmt.Sprintf("|%d|", 0)
+	yen := widget.NewLabel(s_item)
+	//yen.Resize(fyne.NewSize(row_width, row_height))
+	ybox := container.NewGridWrap(fyne.NewSize(row_width, row_height), yen)
+
+	ship := widget.NewLabel(fmt.Sprintf("|%d|", 0))
+	//ship.Resize(fyne.NewSize(row_width, row_height))
+	//sbox := container.NewGridWrap(fyne.NewSize(row_width, row_height), ship)
+
+	row := container.NewHBox(pbox, lbox, ybox, ship)
+
+	return row
+}
+
+func itemEdit(c calculator.Calculator, i widget.ListItemID, w fyne.Window) {
+	desc := widget.NewEntry()
+	desc.SetText(c.Items[i].Desc)
+
+	link := widget.NewEntry()
+	link.SetText(c.Items[i].Link)
+
+	person := widget.NewSelect(
+		c.GetPeople(),
+		func(s string) {
+
+		},
+	)
+
+	yen := widget.NewEntry()
+	yen.SetText(fmt.Sprintf("%d", c.Items[i].Yen))
+
+	ship := widget.NewEntry()
+	ship.SetText(fmt.Sprintf("%d", c.Items[i].Shipping))
+
+	person.PlaceHolder = "Select person"
+	dialog.ShowForm("Edit Item", "Save", "Cancel",
+		[]*widget.FormItem{
+			widget.NewFormItem("Desc", desc),
+			widget.NewFormItem("Link", link),
+			widget.NewFormItem("Person", person),
+			widget.NewFormItem("Price", yen),
+			widget.NewFormItem("Shipping", ship),
+		},
+		func(b bool) {
+			if b {
+				//validation time....
+
+				if person.Selected == "" || person.Selected == person.PlaceHolder {
+					dialog.ShowError(
+						errors.New("person must be selected"),
+						w,
+					)
+					return
+				}
+
+				if len(desc.Text) == 0 || len(desc.Text) > 40 {
+					dialog.ShowError(
+						errors.New("desc invalid"),
+						w,
+					)
+					return
+				}
+
+				_, err := url.Parse(link.Text)
+
+				if err != nil {
+					dialog.ShowError(err, w)
+					return
+				}
+
+				n, e := strconv.Atoi(yen.Text)
+
+				if e != nil {
+					dialog.ShowError(e, nil)
+					return
+				} else if n < 0 {
+					dialog.ShowError(errors.New("cannot be negative"), w)
+					return
+				}
+
+				s, e1 := strconv.Atoi(ship.Text)
+
+				if e1 != nil {
+					dialog.ShowError(e, nil)
+					return
+				} else if s < 0 {
+					dialog.ShowError(errors.New("cannot be negative"), w)
+					return
+				}
+
+				c.Items[i].Desc = desc.Text
+				c.Items[i].Person = c.GetPerson(person.Selected)
+				c.Items[i].Link = link.Text
+				c.Items[i].Yen = n
+				c.Items[i].Shipping = s
+
+			}
+		},
+		w,
+	)
+
+}
+
+func setRow(i calculator.Item, con *fyne.Container) {
+	doubleContainerSetText(i.Person.Name, con.Objects[0].(*fyne.Container))
+	con.Objects[1].(*fyne.Container).Objects[0].(*widget.Hyperlink).URL, _ = url.Parse(i.Link)
+	con.Objects[1].(*fyne.Container).Objects[0].(*widget.Hyperlink).Text = i.Desc
+	doubleContainerSetText(fmt.Sprintf("|%d|", i.Yen), con.Objects[2].(*fyne.Container))
+	con.Objects[3].(*widget.Label).SetText(fmt.Sprintf("|%d|", i.Shipping))
+	//doubleContainerSetText(fmt.Sprintf("|%d|", i.Shipping), con.Objects[3].(*fyne.Container))
+
+}
+
 func doubleContainerSetText(text string, o *fyne.Container) {
 	o.Objects[0].(*widget.Label).SetText(text)
 }
 
 func main() {
 	c := new(calculator.Calculator)
-	c.Add_person("catto")
+	p := c.Add_person("catto")
 	c.Add_person("reverie")
+	c.AddItem(
+		"https://buyee.jp/item/yahoo/auction/x1138258622?conversionType=YahooAuction_DirectSearch",
+		"card",
+		*p,
+		4888,
+		0,
+	)
 
 	a := app.New()
 
@@ -58,28 +192,174 @@ func main() {
 	breakdown_table := widget.NewList(
 		func() int { return len(c.Items) },
 		func() fyne.CanvasObject { //create
-			return hello
+			return initItemRow()
 		},
 		func(lii widget.ListItemID, co fyne.CanvasObject) { //update
+			hbox := co.(*fyne.Container)
+
+			setRow(c.Items[lii], hbox)
 
 		},
 	)
+	breakdown_table.OnSelected = func(id widget.ListItemID) {
+		itemEdit(*c, id, w)
+		breakdown_table.UnselectAll()
+		breakdown_table.Refresh()
+	}
 
-	//call append() on table
-	//then call refresh
+	var row_height float32 = 20.0
+	var row_width float32 = 70.0
 
-	breakdown_box := container.NewVScroll(breakdown_table)
-	s := new(fyne.Size)
-	s.Height = 500
-	s.Width = 500
-	breakdown_box.SetMinSize(*s)
+	per := widget.NewLabel("Person")
+	pbox := container.NewGridWrap(fyne.NewSize(150, row_height), per)
 
-	breakdown_view := container.NewBorder(
-		nil, //top
-		nil, //bottom
-		nil,
-		nil,
-		breakdown_box,
+	link := widget.NewLabel("Item")
+	lbox := container.NewGridWrap(fyne.NewSize(200, row_height), link)
+
+	yen := widget.NewLabel("Yen+Fees")
+	ybox := container.NewGridWrap(fyne.NewSize(row_width, row_height), yen)
+
+	ship := widget.NewLabel("Indiv. Ship")
+	sbox := container.NewGridWrap(fyne.NewSize(row_width, row_height), ship)
+
+	bdown_header := container.NewHBox(
+		pbox,
+		lbox,
+		ybox,
+		sbox,
+	)
+	add_item_button := widget.NewButtonWithIcon("Add", theme.ContentAddIcon(),
+		func() {
+			desc := widget.NewEntry()
+
+			link := widget.NewEntry()
+
+			person := widget.NewSelect(
+				c.GetPeople(),
+				func(s string) {
+
+				},
+			)
+
+			yen := widget.NewEntry()
+
+			ship := widget.NewEntry()
+
+			person.PlaceHolder = "Select person"
+
+			form := widget.NewForm(
+				widget.NewFormItem("Description", desc),
+				widget.NewFormItem("Link", link),
+				widget.NewFormItem("Person", person),
+				widget.NewFormItem("Price", yen),
+				widget.NewFormItem("Shipping", ship),
+			)
+
+			d := dialog.NewForm(
+				"Add Person",
+				"Add",
+				"Cancel",
+				form.Items,
+				func(b bool) {
+					if b {
+						//validation time....
+
+						if person.Selected == "" || person.Selected == person.PlaceHolder {
+							dialog.ShowError(
+								errors.New("person must be selected"),
+								w,
+							)
+							return
+						}
+
+						if len(desc.Text) == 0 || len(desc.Text) > 40 {
+							dialog.ShowError(
+								errors.New("desc invalid"),
+								w,
+							)
+							return
+						}
+
+						_, err := url.Parse(link.Text)
+
+						if err != nil {
+							dialog.ShowError(err, w)
+							return
+						}
+						if yen.Text == "" || ship.Text == "" {
+							dialog.ShowError(errors.New("must fill all fields"), w)
+							return
+						}
+						n, e := strconv.Atoi(yen.Text)
+
+						if e != nil {
+							dialog.ShowError(e, nil)
+							return
+						} else if n < 0 {
+							dialog.ShowError(errors.New("cannot be negative"), w)
+							return
+						}
+
+						s, e1 := strconv.Atoi(ship.Text)
+
+						if e1 != nil {
+							dialog.ShowError(e, nil)
+							return
+						} else if s < 0 {
+							dialog.ShowError(errors.New("cannot be negative"), w)
+							return
+						}
+						c.AddItem(link.Text, desc.Text, c.GetPerson(person.Selected), n, s)
+
+					}
+				},
+				w,
+			)
+			d.Show()
+		},
+	)
+	rm_item_button := widget.NewButtonWithIcon("Remove", theme.ContentRemoveIcon(),
+		func() {
+			items := widget.NewSelect(
+				calculator.Map(c.Items, func(i calculator.Item) string {
+					return i.Desc
+				}),
+				func(s string) {},
+			)
+
+			items.PlaceHolder = "Select an item"
+
+			form := widget.NewForm(
+				widget.NewFormItem("Remove item", items),
+			)
+
+			d := dialog.NewForm(
+				"Remove Item",
+				"Remove",
+				"Cancel",
+				form.Items,
+				func(b bool) {
+					if b && items.Selected != "" && items.Selected != items.PlaceHolder {
+						c.RemoveItem(items.Selected)
+						breakdown_table.Refresh()
+					}
+				},
+				w,
+			)
+			d.Show()
+		},
+	)
+	bd_buttons := container.NewHBox(add_item_button, rm_item_button)
+
+	bdown_header_box := container.NewVBox(
+		bd_buttons,
+		bdown_header,
+	)
+	breakdown_table.Resize(fyne.NewSize(600, 400))
+	breakdown_view := container.NewVBox(
+		bdown_header_box, //top
+
+		container.NewVScroll(breakdown_table),
 	)
 
 	shipping_view := container.NewCenter(
@@ -108,7 +388,7 @@ func main() {
 	)
 
 	name_header_space := container.NewGridWrap(
-		fyne.NewSize(200, 20),
+		fyne.NewSize(200, 30),
 		widget.NewLabel("Person"),
 	)
 	people_row_header := container.NewHBox(
@@ -145,8 +425,41 @@ func main() {
 		},
 	)
 
+	rm_person_button := widget.NewButtonWithIcon("Remove", theme.ContentRemoveIcon(),
+		func() {
+			ne := widget.NewEntry()
+
+			form := widget.NewForm(
+				widget.NewFormItem("Remove person", ne),
+			)
+
+			d := dialog.NewForm(
+				"Remove Person",
+				"Remove",
+				"Cancel",
+				form.Items,
+				func(b bool) {
+					if len(ne.Text) > 3 && len(ne.Text) < 16 && c.IsPerson(ne.Text) {
+						dialog.ShowConfirm("Confirm Removal",
+							"Are you sure? Removing this person removes all their items, if any.",
+							func(confirmed bool) {
+								if confirmed {
+									c.Remove_person(ne.Text)
+									people_list.Refresh()
+								}
+							}, w)
+
+					}
+				},
+				w,
+			)
+			d.Show()
+		},
+	)
+
 	button_header := container.NewHBox(
 		add_person_button,
+		rm_person_button,
 	)
 	people_header := container.NewVBox(
 		button_header,
