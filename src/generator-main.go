@@ -68,6 +68,29 @@ func initItemRow() fyne.CanvasObject {
 	return row
 }
 
+func initShipRow() fyne.CanvasObject {
+	var row_height float32 = 20.0
+	var row_width float32 = 70.0
+
+	name := widget.NewLabel("nametext")
+	nbox := container.NewGridWrap(fyne.NewSize(100, row_height), name)
+
+	es := widget.NewLabel("text")
+	ebox := container.NewGridWrap(fyne.NewSize(row_width, row_height), es)
+
+	a := widget.NewLabel("text")
+	abox := container.NewGridWrap(fyne.NewSize(row_width, row_height), a)
+
+	p := widget.NewLabel("text")
+
+	return container.NewHBox(nbox, ebox, abox, p)
+
+}
+
+func setShipRow(lii widget.ListItemID, con *fyne.Container, w fyne.Window) {
+
+}
+
 func itemEdit(c calculator.Calculator, i widget.ListItemID, w fyne.Window) {
 	desc := widget.NewEntry()
 	desc.SetText(c.Items[i].Desc)
@@ -310,7 +333,7 @@ func main() {
 							return
 						}
 						c.AddItem(link.Text, desc.Text, c.GetPerson(person.Selected), n, s)
-
+						breakdown_table.Refresh()
 					}
 				},
 				w,
@@ -355,15 +378,54 @@ func main() {
 		bd_buttons,
 		bdown_header,
 	)
-	breakdown_table.Resize(fyne.NewSize(600, 400))
+	//breakdown_table.Resize()
 	breakdown_view := container.NewVBox(
 		bdown_header_box, //top
 
-		container.NewVScroll(breakdown_table),
+		container.NewGridWrap(fyne.NewSize(600, 400), breakdown_table),
 	)
 
-	shipping_view := container.NewCenter(
-		hello,
+	estimated := widget.NewLabel("Estimated shipping: 0")
+	actual := widget.NewLabel("Actual shipping: 0")
+	ship_header := container.NewHBox(
+		container.NewGridWrap(fyne.NewSize(70, 20), widget.NewLabel("Person")),
+		container.NewGridWrap(fyne.NewSize(100, 20), widget.NewLabel("Est. Shipping")),
+		container.NewGridWrap(fyne.NewSize(50, 20), widget.NewLabel("Actual")),
+		container.NewGridWrap(fyne.NewSize(50, 20), widget.NewLabel("Proportion")),
+	)
+
+	ship_list := widget.NewList(
+		func() int {
+			return len(c.People)
+		},
+		func() fyne.CanvasObject {
+			return initShipRow()
+		},
+		func(lii widget.ListItemID, co fyne.CanvasObject) {
+
+		},
+	)
+
+	ship_details := container.NewVBox(
+		estimated,
+		actual,
+		ship_header,
+		ship_list,
+	)
+
+	calc_shipping := widget.NewButtonWithIcon("Calculate", theme.ViewRefreshIcon(),
+		func() {
+
+		},
+	)
+	shipping_header := container.NewHBox(calc_shipping)
+
+	shipping_view := container.NewBorder(
+		shipping_header,
+		nil,
+		nil,
+		nil,
+		ship_details,
 	)
 
 	people_list := widget.NewList(
