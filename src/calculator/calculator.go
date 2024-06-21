@@ -3,24 +3,24 @@ package calculator
 type Person struct {
 	Name       string  //name
 	Proportion float32 //percentage
-	Iou        float32
-	Ship_b4    float32
-	Ship_total float32
-	Item_total float32
+	Iou        int
+	Ship_b4    int
+	Ship_total int
+	Item_total int
 }
 
 type Item struct {
 	Link     string
 	Person   Person
-	Yen      float32
-	Shipping float32
+	Yen      int
+	Shipping int
 }
 
 type Calculator struct {
 	People         []Person
 	Items          []Item
-	total_shipping float32
-	batched        float32
+	total_shipping int
+	batched        int
 }
 
 func RemoveIndexPerson(s []Person, index int) []Person {
@@ -52,8 +52,8 @@ func (c *Calculator) Break_shipping_down() {
 	}
 
 	for _, e := range c.People {
-		e.Proportion = e.Ship_b4 / c.total_shipping
-		e.Ship_total = e.Proportion * c.batched
+		e.Proportion = float32(e.Ship_b4) / float32(c.total_shipping)
+		e.Ship_total = int(float32(e.Proportion) * float32(c.batched)) //truncate
 		e.Iou = e.Item_total + e.Ship_total
 	}
 
