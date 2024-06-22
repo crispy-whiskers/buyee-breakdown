@@ -177,7 +177,7 @@ func itemEdit(c calculator.Calculator, i widget.ListItemID, w fyne.Window) {
 				}
 
 				c.Items[i].Desc = desc.Text
-				c.Items[i].Person = c.GetPerson(person.Selected)
+				c.Items[i].Person = c.People[c.GetPerson(person.Selected)]
 				c.Items[i].Link = link.Text
 				c.Items[i].Yen = n
 				c.Items[i].Shipping = s
@@ -210,7 +210,7 @@ func main() {
 	c.AddItem(
 		"https://buyee.jp/item/yahoo/auction/x1138258622?conversionType=YahooAuction_DirectSearch",
 		"card",
-		*p,
+		p,
 		4888,
 		2000,
 	)
@@ -343,7 +343,9 @@ func main() {
 							dialog.ShowError(errors.New("cannot be negative"), w)
 							return
 						}
-						c.AddItem(link.Text, desc.Text, c.GetPerson(person.Selected), n, s)
+						p_pointer := c.People[c.GetPerson(person.Selected)]
+						c.AddItem(link.Text, desc.Text,
+							p_pointer, n, s)
 						breakdown_table.Refresh()
 					}
 				},
@@ -438,8 +440,6 @@ func main() {
 			if e == nil {
 				c.Batched = n
 			}
-			c.Sum_shipping()
-			fmt.Println(c.Items[0].Person.Ship_b4)
 
 			c.Break_shipping_down()
 			ship_details.Refresh()
