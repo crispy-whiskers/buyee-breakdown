@@ -22,8 +22,8 @@ type Item struct {
 type Calculator struct {
 	People         []Person
 	Items          []Item
-	total_shipping int
-	batched        int
+	Total_shipping int
+	Batched        int
 }
 
 func removeIndexPerson(s []Person, index int) []Person {
@@ -57,24 +57,32 @@ func (c *Calculator) PurgePerson(p Person) {
 
 func (c *Calculator) Sum_shipping() {
 
-	for _, e := range c.Items {
-		c.total_shipping += e.Shipping
+	for x := 0; x < len(c.Items); x++ {
+		e := c.Items[x]
+		c.Total_shipping += e.Shipping
 		e.Person.Ship_b4 += e.Shipping
 		e.Person.Item_total += e.Yen
+		fmt.Println(e.Person.Name, e.Person.Ship_b4)
 	}
 }
 
 func (c *Calculator) Break_shipping_down() {
 	c.Sum_shipping()
+	fmt.Println("hii")
 
-	if c.total_shipping == 0 || c.batched == 0 {
+	if c.Total_shipping == 0 || c.Batched == 0 {
+		fmt.Println("rejected")
 		return
 	}
-
-	for _, e := range c.People {
-		e.Proportion = float32(e.Ship_b4) / float32(c.total_shipping)
-		e.Ship_total = int(float32(e.Proportion) * float32(c.batched)) //truncate
+	fmt.Println("hi")
+	for x := 0; x < len(c.People); x++ {
+		e := c.People[x]
+		fmt.Println(e.Ship_b4)
+		e.Proportion = float32(e.Ship_b4) / float32(c.Total_shipping)
+		e.Ship_total = int(float32(e.Proportion) * float32(c.Batched)) //truncate
 		e.Iou = e.Item_total + e.Ship_total
+		fmt.Println(e.Ship_b4)
+
 	}
 
 }

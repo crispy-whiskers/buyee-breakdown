@@ -87,7 +87,14 @@ func initShipRow() fyne.CanvasObject {
 
 }
 
-func setShipRow(lii widget.ListItemID, con *fyne.Container, w fyne.Window) {
+func setShipRow(c calculator.Calculator, lii widget.ListItemID, con *fyne.Container) {
+	//fmt.Println("hi")
+	//fmt.Println(c.People[lii].Name)
+	doubleContainerSetText(c.People[lii].Name, con.Objects[0].(*fyne.Container))
+	doubleContainerSetText(fmt.Sprintf("%d", c.People[lii].Ship_b4), con.Objects[1].(*fyne.Container))
+	doubleContainerSetText(fmt.Sprintf("%d", c.People[lii].Ship_total), con.Objects[2].(*fyne.Container))
+	con.Objects[3].(*widget.Label).SetText(fmt.Sprintf("%.2f", c.People[lii].Proportion))
+	//doubleContainerSetText(fmt.Sprintf("%.2f", c.People[lii].Proportion), con.Objects[3].(*fyne.Container))
 
 }
 
@@ -111,7 +118,9 @@ func itemEdit(c calculator.Calculator, i widget.ListItemID, w fyne.Window) {
 	ship := widget.NewEntry()
 	ship.SetText(fmt.Sprintf("%d", c.Items[i].Shipping))
 
-	person.PlaceHolder = "Select person"
+	//person.PlaceHolder = c.Items[i].Person.Name
+	person.Selected = c.Items[i].Person.Name
+
 	dialog.ShowForm("Edit Item", "Save", "Cancel",
 		[]*widget.FormItem{
 			widget.NewFormItem("Desc", desc),
@@ -203,7 +212,7 @@ func main() {
 		"card",
 		*p,
 		4888,
-		0,
+		2000,
 	)
 
 	a := app.New()
@@ -226,8 +235,10 @@ func main() {
 	)
 	breakdown_table.OnSelected = func(id widget.ListItemID) {
 		itemEdit(*c, id, w)
+		c.Sum_shipping()
 		breakdown_table.UnselectAll()
-		breakdown_table.Refresh()
+		//breakdown_table.Refresh()
+		breakdown_table.RefreshItem(id)
 	}
 
 	var row_height float32 = 20.0
@@ -279,7 +290,7 @@ func main() {
 			)
 
 			d := dialog.NewForm(
-				"Add Person",
+				"Add Item",
 				"Add",
 				"Cancel",
 				form.Items,
@@ -386,7 +397,14 @@ func main() {
 	)
 
 	estimated := widget.NewLabel("Estimated shipping: 0")
-	actual := widget.NewLabel("Actual shipping: 0")
+	actual := widget.NewLabel("Actual shipping:")
+	actual_entry := widget.NewEntry()
+	if c.Batched > 0 {
+		actual_entry.SetText(fmt.Sprintf("%d", c.Batched))
+	}
+	if c.Total_shipping > 0 {
+		estimated.SetText(fmt.Sprintf("Estimated shipping: %d", c.Total_shipping))
+	}
 	ship_header := container.NewHBox(
 		container.NewGridWrap(fyne.NewSize(70, 20), widget.NewLabel("Person")),
 		container.NewGridWrap(fyne.NewSize(100, 20), widget.NewLabel("Est. Shipping")),
@@ -402,20 +420,29 @@ func main() {
 			return initShipRow()
 		},
 		func(lii widget.ListItemID, co fyne.CanvasObject) {
-
+			setShipRow(*c, lii, co.(*fyne.Container))
 		},
 	)
 
 	ship_details := container.NewVBox(
 		estimated,
-		actual,
+		container.NewHBox(actual, actual_entry),
 		ship_header,
-		ship_list,
+		container.NewGridWrap(fyne.NewSize(600, 400), ship_list),
 	)
 
 	calc_shipping := widget.NewButtonWithIcon("Calculate", theme.ViewRefreshIcon(),
 		func() {
+			//fmt.Println("yeeet")
+			n, e := strconv.Atoi(actual_entry.Text)
+			if e == nil {
+				c.Batched = n
+			}
+			c.Sum_shipping()
+			fmt.Println(c.Items[0].Person.Ship_b4)
 
+			c.Break_shipping_down()
+			ship_details.Refresh()
 		},
 	)
 	shipping_header := container.NewHBox(calc_shipping)
