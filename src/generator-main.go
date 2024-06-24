@@ -602,7 +602,13 @@ func main() {
 				dialog.ShowError(err, w)
 				return
 			}
+			c_pointer := *c
 			*c, err = calculator.LoadFromFile(data)
+			if err != nil {
+				dialog.ShowError(err, w)
+				*c = c_pointer
+				return
+			}
 		},
 		w,
 	)
@@ -614,7 +620,7 @@ func main() {
 	)
 
 	oview := container.NewVBox(
-		widget.NewButtonWithIcon("Save", theme.DocumentSaveIcon(),
+		widget.NewButtonWithIcon("Open", theme.DocumentIcon(),
 			func() {
 				read_dialog.Show()
 			}),
