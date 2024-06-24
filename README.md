@@ -26,4 +26,7 @@ Because I needed to learn it for work.
 - Run `go mod tidy`
 - Run `go run ./src/generator-main.go`
 
-idk how to build a target for golang yet
+### Build
+- Navigate to the src directory
+- `go build -o breakdown.exe` 
+

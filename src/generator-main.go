@@ -206,15 +206,6 @@ func doubleContainerSetText(text string, o *fyne.Container) {
 
 func main() {
 	c := new(calculator.Calculator)
-	p := c.Add_person("catto")
-	c.Add_person("reverie")
-	c.AddItem(
-		"https://buyee.jp/item/yahoo/auction/x1138258622?conversionType=YahooAuction_DirectSearch",
-		"card",
-		p,
-		4888,
-		2000,
-	)
 
 	a := app.New()
 
