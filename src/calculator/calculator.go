@@ -50,7 +50,7 @@ func findPerson(s []Item, p *Person) int {
 func (c *Calculator) PurgePerson(p *Person) {
 	for i := findPerson(c.Items, p); i != -1; i = findPerson(c.Items, p) {
 		if i != -1 {
-			RemoveIndexItem(c.Items, i)
+			c.Items = RemoveIndexItem(c.Items, i)
 		}
 	}
 }
@@ -70,6 +70,7 @@ func (c *Calculator) Sum_shipping() {
 }
 
 func (c *Calculator) Break_shipping_down() {
+	c.Total_shipping = 0
 	c.Sum_shipping()
 	fmt.Println("hii")
 
@@ -128,7 +129,6 @@ func (c *Calculator) GetPerson(name string) int {
 	for i, e := range c.People {
 		if e.Name == name {
 			return i
-
 		}
 	}
 	return -1

@@ -14,6 +14,7 @@ import (
 
 	//"fyne.io/fyne/v2/layout"
 	"breakdown/src/calculator"
+	"io"
 
 	"fyne.io/fyne/v2/widget"
 )
@@ -218,8 +219,6 @@ func main() {
 	a := app.New()
 
 	w := a.NewWindow("Breakdown Generator")
-
-	hello := widget.NewLabel("Batch Order Breakdown")
 
 	breakdown_table := widget.NewList(
 		func() int { return len(c.Items) },
@@ -563,12 +562,86 @@ func main() {
 		people_list,
 	)
 
-	save_view := container.NewBorder(
-		nil,
-		nil,
-		nil,
-		nil,
-		hello,
+	save_dialog := dialog.NewFileSave(
+		func(uc fyne.URIWriteCloser, err error) {
+			dialog.ShowInformation("Notice", "Save the file with a \".json\" extension for ease of use.", w)
+
+			if err != nil {
+				dialog.ShowError(err, w)
+
+			}
+			if uc == nil {
+				return //cancel save
+			}
+			data, e := c.SaveAsString()
+			if e != nil {
+				dialog.ShowError(err, w)
+				return
+			}
+
+			if data == nil {
+				dialog.ShowError(errors.New("unable to create JSON"), w)
+				return
+			}
+
+			_, err = uc.Write(data)
+			if err != nil {
+				dialog.ShowError(err, w)
+				return
+			}
+			dialog.ShowInformation("Success", "File saved successfully.", w)
+			uc.Close()
+		},
+		w,
+	)
+	read_dialog := dialog.NewFileOpen(
+		func(uc fyne.URIReadCloser, err error) {
+			if err != nil {
+				dialog.ShowError(err, w)
+				return
+			}
+			if uc == nil {
+				// User canceled the dialog
+				return
+			}
+
+			// Read the content from the selected file
+			data, err := io.ReadAll(uc)
+			if err != nil {
+				dialog.ShowError(err, w)
+				return
+			}
+			*c, err = calculator.LoadFromFile(data)
+		},
+		w,
+	)
+	sview := container.NewVBox(
+		widget.NewButtonWithIcon("Save", theme.DocumentSaveIcon(),
+			func() {
+				save_dialog.Show()
+			}),
+	)
+
+	oview := container.NewVBox(
+		widget.NewButtonWithIcon("Save", theme.DocumentSaveIcon(),
+			func() {
+				read_dialog.Show()
+			}),
+	)
+
+	s_entry := widget.NewMultiLineEntry()
+	scroller := container.NewGridWrap(fyne.NewSize(600, 400), container.NewScroll(s_entry))
+	entry_button := widget.NewButtonWithIcon("Spreadsheet Export", theme.FileTextIcon(),
+		func() {
+			s_entry.SetText(c.ShowAsTablestring())
+			dialog.ShowCustom("Spreadsheet Export", "Ok", scroller, w)
+		},
+	)
+
+	save_view := container.NewVBox(
+		sview,
+		oview,
+		entry_button,
 	)
 
 	tabs := container.NewAppTabs(

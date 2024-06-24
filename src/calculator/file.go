@@ -3,37 +3,24 @@ package calculator
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 )
 
-func SaveToFile(c Calculator, filename string) error {
+func (c *Calculator) SaveAsString() ([]byte, error) {
 	// Convert the Calculator struct to JSON
 	data, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %v", err)
+		return nil, fmt.Errorf("failed to marshal JSON: %v", err)
 	}
 
-	// Write the JSON data to a file
-	err = os.WriteFile(filename, data, 0644)
-	if err != nil {
-		return fmt.Errorf("failed to write to file: %v", err)
-	}
-
-	return nil
+	return data, nil
 }
 
-func LoadFromFile(filename string) (Calculator, error) {
+func LoadFromFile(data []byte) (Calculator, error) {
 	var c Calculator
 
-	// Read the JSON data from the file
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return c, fmt.Errorf("failed to read from file: %v", err)
-	}
-
 	// Convert the JSON data to a Calculator struct
-	err = json.Unmarshal(data, &c)
+	err := json.Unmarshal(data, &c)
 	if err != nil {
 		return c, fmt.Errorf("failed to unmarshal JSON: %v", err)
 	}
@@ -41,7 +28,7 @@ func LoadFromFile(filename string) (Calculator, error) {
 	return c, nil
 }
 
-func ShowAsTable(c Calculator) string {
+func (c *Calculator) ShowAsTablestring() string {
 	var builder strings.Builder
 
 	// Table for Items
