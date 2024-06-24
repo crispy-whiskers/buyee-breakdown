@@ -555,7 +555,7 @@ func main() {
 
 	save_dialog := dialog.NewFileSave(
 		func(uc fyne.URIWriteCloser, err error) {
-			dialog.ShowInformation("Notice", "Save the file with a \".json\" extension for ease of use.", w)
+			//dialog.ShowInformation("Notice", "Save the file with a \".json\" extension for ease of use.", w)
 
 			if err != nil {
 				dialog.ShowError(err, w)
