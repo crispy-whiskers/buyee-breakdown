@@ -506,7 +506,7 @@ func main() {
 
 	rm_person_button := widget.NewButtonWithIcon("Remove", theme.ContentRemoveIcon(),
 		func() {
-			ne := widget.NewEntry()
+			ne := widget.NewSelect(c.GetPeople(), func(s string) {})
 
 			form := widget.NewForm(
 				widget.NewFormItem("Remove person", ne),
@@ -518,12 +518,12 @@ func main() {
 				"Cancel",
 				form.Items,
 				func(b bool) {
-					if len(ne.Text) > 3 && len(ne.Text) < 16 && c.IsPerson(ne.Text) {
+					if b {
 						dialog.ShowConfirm("Confirm Removal",
 							"Are you sure? Removing this person removes all their items, if any.",
 							func(confirmed bool) {
 								if confirmed {
-									c.Remove_person(ne.Text)
+									c.Remove_person(ne.Selected)
 									people_list.Refresh()
 								}
 							}, w)
