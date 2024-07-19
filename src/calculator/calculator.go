@@ -55,33 +55,53 @@ func (c *Calculator) PurgePerson(p *Person) {
 	}
 }
 
-func (c *Calculator) Sum_shipping() {
+func (c *Calculator) Sum_shipping() []*Person {
 	for _, el := range c.People {
+		fmt.Println(&el, el.Name)
 		el.Ship_b4 = 0
 		el.Item_total = 0
 	}
 	for x := 0; x < len(c.Items); x++ {
 		e := c.Items[x]
-		c.Total_shipping += e.Shipping
-		e.Person.Ship_b4 += e.Shipping
-		e.Person.Item_total += e.Yen
-		//fmt.Println(e.Person.Name, e.Person.Ship_b4)
+		p := *e.Person
+		c.Total_shipping = e.Shipping + c.Total_shipping
+		p.Ship_b4 += (e.Shipping)
+		p.Item_total += e.Yen
+		//fmt.Println(p.Name, *p.Ship_b4, c.Total_shipping)
+		//fmt.Println(p)
 	}
+	return c.People
 }
 
 func (c *Calculator) Break_shipping_down() {
+
 	c.Total_shipping = 0
-	c.Sum_shipping()
+	for _, el := range c.People {
+		fmt.Println(&el, el.Name)
+		el.Ship_b4 = 0
+		el.Item_total = 0
+	}
+	for x := 0; x < len(c.Items); x++ {
+		e := c.Items[x]
+		p := c.People[c.GetPerson(e.Person.Name)]
+		c.Total_shipping = e.Shipping + c.Total_shipping
+		p.Ship_b4 += (e.Shipping)
+		p.Item_total += e.Yen
+		fmt.Println(p.Name, p.Ship_b4, c.Total_shipping)
+		//fmt.Println(p)
+	}
+
 	fmt.Println("hii")
+	fmt.Println(c.Total_shipping)
 
 	if c.Total_shipping == 0 || c.Batched == 0 {
 		fmt.Println("rejected")
 		return
 	}
 	fmt.Println("hi")
-	for x := 0; x < len(c.People); x++ {
-		e := c.People[x]
-		fmt.Println(e.Ship_b4)
+	for _, e := range c.People {
+
+		fmt.Println(&e, e.Name, e.Ship_b4)
 		e.Proportion = float32(e.Ship_b4) / float32(c.Total_shipping)
 		e.Ship_total = int(float32(e.Proportion) * float32(c.Batched)) //truncate
 		e.Iou = e.Item_total + e.Ship_total

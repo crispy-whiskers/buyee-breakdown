@@ -71,7 +71,7 @@ func initItemRow() fyne.CanvasObject {
 
 func initShipRow() fyne.CanvasObject {
 	var row_height float32 = 20.0
-	var row_width float32 = 70.0
+	var row_width float32 = 120.0
 
 	name := widget.NewLabel("nametext")
 	nbox := container.NewGridWrap(fyne.NewSize(100, row_height), name)
@@ -88,8 +88,8 @@ func initShipRow() fyne.CanvasObject {
 
 }
 
-func setShipRow(c calculator.Calculator, lii widget.ListItemID, con *fyne.Container) {
-	//fmt.Println("hi")
+func setShipRow(c *calculator.Calculator, lii widget.ListItemID, con *fyne.Container) {
+	//fmt.Println(&c)
 	//fmt.Println(c.People[lii].Name)
 	doubleContainerSetText(c.People[lii].Name, con.Objects[0].(*fyne.Container))
 	doubleContainerSetText(fmt.Sprintf("%d", c.People[lii].Ship_b4), con.Objects[1].(*fyne.Container))
@@ -398,10 +398,10 @@ func main() {
 		estimated.SetText(fmt.Sprintf("Estimated shipping: %d", c.Total_shipping))
 	}
 	ship_header := container.NewHBox(
-		container.NewGridWrap(fyne.NewSize(70, 20), widget.NewLabel("Person")),
+		container.NewGridWrap(fyne.NewSize(100, 20), widget.NewLabel("Person")),
 		container.NewGridWrap(fyne.NewSize(100, 20), widget.NewLabel("Est. Shipping")),
-		container.NewGridWrap(fyne.NewSize(50, 20), widget.NewLabel("Actual")),
-		container.NewGridWrap(fyne.NewSize(50, 20), widget.NewLabel("Proportion")),
+		container.NewGridWrap(fyne.NewSize(75, 20), widget.NewLabel("Actual")),
+		container.NewGridWrap(fyne.NewSize(75, 20), widget.NewLabel("Proportion")),
 	)
 
 	ship_list := widget.NewList(
@@ -412,7 +412,7 @@ func main() {
 			return initShipRow()
 		},
 		func(lii widget.ListItemID, co fyne.CanvasObject) {
-			setShipRow(*c, lii, co.(*fyne.Container))
+			setShipRow(c, lii, co.(*fyne.Container))
 		},
 	)
 
@@ -430,7 +430,7 @@ func main() {
 			if e == nil {
 				c.Batched = n
 			}
-
+			fmt.Println(&c)
 			c.Break_shipping_down()
 			ship_details.Refresh()
 		},
@@ -495,7 +495,7 @@ func main() {
 					if len(ne.Text) > 3 && len(ne.Text) < 16 {
 
 						c.Add_person(ne.Text)
-						people_list.Refresh()
+						name_header_space.Refresh()
 					}
 				},
 				w,
